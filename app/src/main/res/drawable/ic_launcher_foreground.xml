@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer glass card -->
+    <path
+        android:pathData="M30,34C30,31.79 31.79,30 34,30H74C76.21,30 78,31.79 78,34V74C78,76.21 76.21,78 74,78H34C31.79,78 30,76.21 30,74V34Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="30"
+                android:endX="78"
+                android:endY="78"
+                android:type="linear">
+                <item android:offset="0" android:color="#99FFFFFF" />
+                <item android:offset="1" android:color="#4DFFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner content: A stylized sun/motivation spark -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M54,42c-6.63,0 -12,5.37 -12,12s5.37,12 12,12 12,-5.37 12,-12 -5.37,-12 -12,-12zM54,62c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8 8,3.59 8,8 -3.59,8 -8,8z" />
+
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M53,34h2v6h-2zM53,68h2v6h-2zM74,53v2h-6v-2zM40,53v2h-6v-2zM68.14,38.45l1.41,1.41l-4.24,4.24l-1.41,-1.41zM44.1,62.49l1.41,1.41l-4.24,4.24l-1.41,-1.41zM69.55,68.14l-1.41,1.41l-4.24,-4.24l1.41,-1.41zM39.86,39.86l1.41,-1.41l4.24,4.24l-1.41,1.41z" />
+
+    <!-- Paper corner fold (glassmorphic look) -->
+    <path
+        android:pathData="M70,30L78,38V34C78,31.79 76.21,30 74,30H70Z"
+        android:fillColor="#4DFFFFFF" />
+
+</vector>

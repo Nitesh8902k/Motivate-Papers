@@ -43,12 +43,6 @@ fun WallpaperCanvas(
     val dateFormatter = DateTimeFormatter.ofPattern("EEE | MMM dd", Locale.US)
     val dateString = currentDate.format(dateFormatter).uppercase()
 
-    // The blur effect for the vibrant gradient inside the inner capsule
-    val innerGradientBlur = if (isCapturing) {
-        Modifier
-    } else {
-        Modifier.blur(40.dp)
-    }
 
     Box(
         modifier = modifier
@@ -95,7 +89,6 @@ fun WallpaperCanvas(
                                 )
                             )
                         )
-                        .then(innerGradientBlur) // BLUR APPLIED HERE ONLY
                 )
 
                 // LAYER 2: Light Glass Frosting

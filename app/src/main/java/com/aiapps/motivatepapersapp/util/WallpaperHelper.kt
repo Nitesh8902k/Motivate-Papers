@@ -9,7 +9,6 @@ import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.BroadcastFrameClock
 import androidx.compose.runtime.Recomposer
@@ -28,6 +27,8 @@ import com.aiapps.motivatepapersapp.data.model.Quote
 import com.aiapps.motivatepapersapp.ui.components.WallpaperCanvas
 import com.aiapps.motivatepapersapp.ui.theme.MotivatePapersAppTheme
 import kotlinx.coroutines.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
 
 class WallpaperHelper(private val context: Context) {
 
@@ -41,7 +42,7 @@ class WallpaperHelper(private val context: Context) {
     suspend fun setWallpaper(bitmap: Bitmap): Boolean = withContext(Dispatchers.IO) {
         Log.i(TAG, "setWallpaper: Starting for bitmap ${bitmap.width}x${bitmap.height}")
         val wallpaperManager = WallpaperManager.getInstance(context)
-        
+
         try {
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "Applying wallpaper...", Toast.LENGTH_SHORT).show()
@@ -97,23 +98,28 @@ class WallpaperHelper(private val context: Context) {
         val height = bounds.height()
 
         val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        bitmap.eraseColor(android.graphics.Color.BLACK)
+
+        // FIX 1: Ensure the base bitmap is completely solid white, not black.
+        // Android's WallpaperManager does not handle transparency. Transparent pixels over black = Black screen.
+        bitmap.eraseColor(android.graphics.Color.WHITE)
         val canvas = Canvas(bitmap)
 
         val composeView = ComposeView(context)
-        composeView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+
+        // FIX 2: Removed `composeView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)`
+        // Modifier.blur requires Hardware Acceleration. Forcing Software Rendering strips the blur
+        // entirely and causes empty/transparent views to be drawn, which result in black rectangles.
 
         val frameClock = BroadcastFrameClock()
-        // Recomposer must run in a context that contains the MonotonicFrameClock (frameClock)
         val recomposer = Recomposer(coroutineContext + frameClock)
         val recomposerJob = launch {
             withContext(frameClock) {
                 recomposer.runRecomposeAndApplyChanges()
             }
         }
-        
+
         composeView.setParentCompositionContext(recomposer)
-        
+
         val lifecycleOwner = object : LifecycleOwner, SavedStateRegistryOwner, ViewModelStoreOwner {
             private val lifecycleRegistry = LifecycleRegistry(this)
             private val savedStateRegistryController = SavedStateRegistryController.create(this)
@@ -145,17 +151,23 @@ class WallpaperHelper(private val context: Context) {
         composeView.visibility = View.VISIBLE
 
         composeView.setContent {
+            // Calculate exact DP dimensions so headless Compose doesn't collapse to 0x0
+            val density = context.resources.displayMetrics.density
+            val widthDp = androidx.compose.ui.unit.Dp(width / density)
+            val heightDp = androidx.compose.ui.unit.Dp(height / density)
+
             MotivatePapersAppTheme(darkTheme = false) {
-                // Surface helps ensure a consistent background behavior
                 androidx.compose.material3.Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = androidx.compose.ui.graphics.Color.Transparent
+                    // FIX 1: Explicitly define the size instead of fillMaxSize()
+                    modifier = Modifier.size(widthDp, heightDp),
+                    color = androidx.compose.ui.graphics.Color.White
                 ) {
                     WallpaperCanvas(
                         quote = quote,
                         palette = palette,
                         dayOfYear = dayOfYear,
-                        modifier = Modifier.fillMaxSize(),
+                        // FIX 2: Pass explicit size to the Canvas component too
+                        modifier = Modifier.size(widthDp, heightDp),
                         isCapturing = true
                     )
                 }
@@ -190,7 +202,7 @@ class WallpaperHelper(private val context: Context) {
 
             Log.d(TAG, "Drawing to canvas...")
             composeView.draw(canvas)
-            
+
             val cp = bitmap.getPixel(width / 2, height / 2)
             Log.d(TAG, "Center pixel result: ${Integer.toHexString(cp)}")
 

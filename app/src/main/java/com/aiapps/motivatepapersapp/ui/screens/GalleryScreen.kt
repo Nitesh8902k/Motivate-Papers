@@ -61,7 +61,7 @@ fun GalleryScreen(
                                     modifier = Modifier
                                         .padding(8.dp)
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF1B261E))
+                                        .background(Color(0xFF1B261E).copy(alpha = 0.6f))
                                 ) {
                                     Icon(
                                         Icons.Rounded.ArrowBackIosNew,
@@ -69,11 +69,6 @@ fun GalleryScreen(
                                         tint = Color.White,
                                         modifier = Modifier.size(16.dp)
                                     )
-                                }
-                            },
-                            actions = {
-                                IconButton(onClick = { /* Settings/Filter */ }) {
-                                    Icon(Icons.Rounded.Tune, contentDescription = "Filter", tint = Color.Black)
                                 }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -171,8 +166,8 @@ fun QuoteGlassCard(
                 )
             )
             .border(
-                1.dp, 
-                Color.White.copy(alpha = 0.5f), 
+                1.dp,
+                Color.White.copy(alpha = 0.5f),
                 RoundedCornerShape(40.dp)
             )
             .padding(32.dp)
@@ -193,41 +188,50 @@ fun QuoteGlassCard(
                         )
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Wrap the quotes and text in a Box so they perfectly layer/overlap
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Big opening quotation mark (Background layer)
                 Text(
-                    text = "Featured: 12 Oct 2023", // Placeholder for deterministic logic
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Black.copy(alpha = 0.5f)
+                    text = "“",
+                    fontSize = 120.sp,
+                    fontFamily = FontFamily.Serif,
+                    color = primaryColor.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = (-8).dp, y = (-24).dp)
+                )
+
+                // Actual Quote (Foreground layer)
+                Text(
+                    text = quote.quote,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 28.sp
+                    ),
+                    color = Color.Black.copy(alpha = 0.8f),
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(horizontal = 16.dp, vertical = 12.dp) // Generous padding to give the text breathing room
+                )
+
+                // Big closing quotation mark (Background layer)
+                Text(
+                    text = "”",
+                    fontSize = 120.sp,
+                    fontFamily = FontFamily.Serif,
+                    color = primaryColor.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 8.dp, y = 74.dp)
                 )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "“",
-                fontSize = 48.sp,
-                fontFamily = FontFamily.Serif,
-                color = primaryColor.copy(alpha = 0.5f),
-                lineHeight = 0.sp
-            )
-            
-            Text(
-                text = quote.quote,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = 28.sp
-                ),
-                color = Color.Black.copy(alpha = 0.8f)
-            )
-            
-            Text(
-                text = "”",
-                fontSize = 48.sp,
-                fontFamily = FontFamily.Serif,
-                color = primaryColor.copy(alpha = 0.5f),
-                modifier = Modifier.align(Alignment.End),
-                lineHeight = 0.sp
-            )
         }
     }
 }

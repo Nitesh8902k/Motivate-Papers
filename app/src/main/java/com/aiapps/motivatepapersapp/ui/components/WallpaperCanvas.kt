@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +53,7 @@ fun WallpaperCanvas(
         // Dotted Background Layer (Base)
         DottedBackground(
             modifier = Modifier.fillMaxSize(),
-            dotColor = Color.Gray.copy(alpha = 0.15f)
+            dotColor = Color.Gray.copy(alpha = 0.05f)
         )
 
         // OUTER CAPSULE
@@ -95,14 +96,14 @@ fun WallpaperCanvas(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .background(Color.White.copy(alpha = 0.25f))
+                        .background(Color.White.copy(alpha = 0.35f))
                 )
 
                 // LAYER 3: The Content (Text and UI elements) - NOT BLURRED
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp),
+                        .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -112,15 +113,15 @@ fun WallpaperCanvas(
                         Text(
                             text = "MINDFUL FLOW",
                             color = textColor.copy(alpha = 0.7f),
-                            fontSize = 12.sp,
+                            fontSize = 8.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 2.sp
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(0.dp))
                         Text(
                             text = dateString,
                             color = textColor.copy(alpha = 0.6f),
-                            fontSize = 12.sp,
+                            fontSize = 8.sp,
                             fontWeight = FontWeight.Medium,
                             letterSpacing = 1.sp
                         )
@@ -130,11 +131,13 @@ fun WallpaperCanvas(
                     Text(
                         text = "\"${quote.quote}\"",
                         color = textColor,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontStyle = FontStyle.Italic,
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontStyle = FontStyle.Normal,
                         textAlign = TextAlign.Center,
-                        lineHeight = 34.sp
+                        lineHeight = 12.sp,
+                        maxLines = 3, // Limits the quote to 2 lines (you can adjust this number)
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis // Adds the "..." at the end
                     )
 
                     // Bottom Section: Palette Dots
@@ -145,7 +148,7 @@ fun WallpaperCanvas(
                         gradientColors.forEach { color ->
                             Box(
                                 modifier = Modifier
-                                    .size(12.dp)
+                                    .size(4.dp)
                                     .clip(RoundedCornerShape(50))
                                     .background(color)
                                     .border(0.5.dp, Color.White, RoundedCornerShape(50))

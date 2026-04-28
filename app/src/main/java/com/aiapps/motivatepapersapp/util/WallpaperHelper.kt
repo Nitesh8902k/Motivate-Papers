@@ -122,10 +122,10 @@ class WallpaperHelper(private val context: Context) {
 
         // 4. Draw Dotted Background
         val dotPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(38, 128, 128, 128) // Gray with 15% alpha
+            color = android.graphics.Color.argb(25, 128, 128, 128) // Gray with 15% alpha
             isAntiAlias = true
         }
-        val spacing = 60f
+        val spacing = 30f
         for (x in 0..width step spacing.toInt()) {
             for (y in 0..height step spacing.toInt()) {
                 canvas.drawCircle(x.toFloat(), y.toFloat(), 4f, dotPaint)
@@ -133,41 +133,68 @@ class WallpaperHelper(private val context: Context) {
         }
 
         // 5. Calculate Capsule Dimensions
-        val outerWidth = width * 0.85f
-        val outerHeight = height * 0.65f
+        val outerWidth = width * 0.8f
+        val outerHeight = height * 0.55f
         val outerLeft = (width - outerWidth) / 2f
-        val outerTop = (height - outerHeight) / 2f
+        val outerTop = (height - outerHeight) / 2.2f
 
-        val innerWidth = outerWidth * 0.85f
-        val innerHeight = outerHeight * 0.85f
+        val innerWidth = outerWidth * 0.8f
+        val innerHeight = outerHeight * 0.6f
         val innerLeft = outerLeft + (outerWidth - innerWidth) / 2f
         val innerTop = outerTop + (outerHeight - innerHeight) / 2f
 
         // 6. Draw Outer Capsule
         val outerRect = android.graphics.RectF(outerLeft, outerTop, outerLeft + outerWidth, outerTop + outerHeight)
         val outerBgPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(38, 255, 255, 255) // 15% White
+            color = android.graphics.Color.argb(255, 249, 246, 241)
             isAntiAlias = true
+            // Add soft outer drop shadow: radius (blur size), dx (horizontal offset), dy (vertical offset), shadowColor
+            setShadowLayer(65f, 0f, 75f, android.graphics.Color.argb(50, 0, 0, 0))
         }
+        val edgeCenterColor = android.graphics.Color.parseColor("#EDD8C5")
+        val cornerColor = android.graphics.Color.parseColor("#A1836B")
+
         val outerStrokePaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(76, 255, 255, 255) // 30% White
+            // SweepGradient goes clockwise starting from 3 o'clock (0 degrees).
+            // We alternate edge colors (0, 90, 180, 270) and corner colors (45, 135, 225, 315).
+            shader = android.graphics.SweepGradient(
+                outerRect.centerX(), outerRect.centerY(),
+                intArrayOf(
+                    edgeCenterColor, cornerColor, edgeCenterColor, cornerColor,
+                    edgeCenterColor, cornerColor, edgeCenterColor, cornerColor, edgeCenterColor
+                ),
+                floatArrayOf(
+                    0f,      // 0° (Right Edge)
+                    0.125f,  // 45° (Bottom-Right Corner)
+                    0.25f,   // 90° (Bottom Edge)
+                    0.375f,  // 135° (Bottom-Left Corner)
+                    0.5f,    // 180° (Left Edge)
+                    0.625f,  // 225° (Top-Left Corner)
+                    0.75f,   // 270° (Top Edge)
+                    0.875f,  // 315° (Top-Right Corner)
+                    1f       // 360° (Back to Right Edge)
+                )
+            )
             style = android.graphics.Paint.Style.STROKE
-            strokeWidth = 3f
+            strokeWidth = 16f
             isAntiAlias = true
         }
-        canvas.drawRoundRect(outerRect, 90f, 90f, outerBgPaint)
-        canvas.drawRoundRect(outerRect, 90f, 90f, outerStrokePaint)
+        canvas.drawRoundRect(outerRect, 300f, 300f, outerBgPaint)
+        canvas.drawRoundRect(outerRect, 300f, 300f, outerStrokePaint)
 
         // 7. Draw Inner Capsule (Radial Gradient + Frosting)
         val innerRect = android.graphics.RectF(innerLeft, innerTop, innerLeft + innerWidth, innerTop + innerHeight)
-        val innerRadialPaint = android.graphics.Paint().apply {
-            shader = android.graphics.RadialGradient(
-                innerRect.centerX(), innerRect.centerY(), innerWidth,
-                intArrayOf(
-                    android.graphics.Color.argb(204, android.graphics.Color.red(c2), android.graphics.Color.green(c2), android.graphics.Color.blue(c2)), // c2 at 80%
-                    android.graphics.Color.argb(102, android.graphics.Color.red(c3), android.graphics.Color.green(c3), android.graphics.Color.blue(c3)), // c3 at 40%
-                    android.graphics.Color.TRANSPARENT
-                ),
+        val innerShadowPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.WHITE // Solid color ensures shadow color works
+            setShadowLayer(95f, 0f, 90f, android.graphics.Color.argb(30, 0, 0, 0))
+            isAntiAlias = true
+        }
+        canvas.drawRoundRect(innerRect, 230f, 230f, innerShadowPaint)
+        val innerBgPaint = android.graphics.Paint().apply {
+            // Reusing the c1, c2, c3, c4 palette as a linear gradient for the inner capsule
+            shader = android.graphics.LinearGradient(
+                innerRect.left, innerRect.top, innerRect.left, innerRect.bottom,
+                intArrayOf(c1, c2, c3, c4),
                 null,
                 android.graphics.Shader.TileMode.CLAMP
             )
@@ -180,12 +207,12 @@ class WallpaperHelper(private val context: Context) {
         val innerStrokePaint = android.graphics.Paint().apply {
             color = android.graphics.Color.argb(128, 255, 255, 255) // 50% White
             style = android.graphics.Paint.Style.STROKE
-            strokeWidth = 3f
+            strokeWidth = 5f
             isAntiAlias = true
         }
-        canvas.drawRoundRect(innerRect, 70f, 70f, innerRadialPaint)
-        canvas.drawRoundRect(innerRect, 70f, 70f, innerFrostPaint)
-        canvas.drawRoundRect(innerRect, 70f, 70f, innerStrokePaint)
+        canvas.drawRoundRect(innerRect, 230f, 230f, innerBgPaint)
+        canvas.drawRoundRect(innerRect, 230f, 230f, innerFrostPaint)
+        canvas.drawRoundRect(innerRect, 230f, 230f, innerStrokePaint)
 
         // 8. Draw Text & Content
         val textColor = getNativeDarkerAnalogousColor(c1)
@@ -193,29 +220,29 @@ class WallpaperHelper(private val context: Context) {
         // Draw "MINDFUL FLOW"
         val headerPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.argb(178, android.graphics.Color.red(textColor), android.graphics.Color.green(textColor), android.graphics.Color.blue(textColor)) // 70% opacity
-            textSize = 36f
+            textSize = 45f
             typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-            letterSpacing = 0.15f
+            letterSpacing = 0.25f
             textAlign = android.graphics.Paint.Align.CENTER
         }
-        canvas.drawText("MINDFUL FLOW", innerRect.centerX(), innerRect.top + 100f, headerPaint)
+        canvas.drawText("TODAY'S QUOTE", innerRect.centerX(), innerRect.top + 130f, headerPaint)
 
         // Draw Date String
         val dateString = java.time.LocalDate.ofYearDay(java.time.LocalDate.now().year, dayOfYear.coerceIn(1, 365))
             .format(java.time.format.DateTimeFormatter.ofPattern("EEE | MMM dd", java.util.Locale.US)).uppercase()
         val datePaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.argb(153, android.graphics.Color.red(textColor), android.graphics.Color.green(textColor), android.graphics.Color.blue(textColor)) // 60% opacity
-            textSize = 32f
-            letterSpacing = 0.1f
+            textSize = 40f
+            letterSpacing = 0.2f
             textAlign = android.graphics.Paint.Align.CENTER
         }
-        canvas.drawText(dateString, innerRect.centerX(), innerRect.top + 150f, datePaint)
+        canvas.drawText(dateString, innerRect.centerX(), innerRect.top + 180f, datePaint)
 
         // Draw Quote using StaticLayout (handles multi-line text wrapping automatically)
         val quotePaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = textColor
+            color = android.graphics.Color.argb(200, android.graphics.Color.red(textColor), android.graphics.Color.green(textColor), android.graphics.Color.blue(textColor)) // 70% opacity
             textSize = 68f
-            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.ITALIC)
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
             textAlign = android.graphics.Paint.Align.CENTER
         }
 
@@ -229,7 +256,7 @@ class WallpaperHelper(private val context: Context) {
         }
 
         // Center the multi-line quote vertically inside the capsule
-        val textY = innerRect.centerY() - (textLayout.height / 2f)
+        val textY = innerRect.centerY() - (textLayout.height / 2f) + 50
         canvas.save()
         canvas.translate(innerRect.centerX(), textY)
         textLayout.draw(canvas)
@@ -259,6 +286,67 @@ class WallpaperHelper(private val context: Context) {
             canvas.drawCircle(startX, startY, dotRadius, dotStrokePaint)
             startX += (dotRadius * 2) + dotSpacing
         }
+        // 10. Draw Year Passed Percentage Bar (Outside capsules, with specified custom colors)
+        val year = java.time.LocalDate.now().year
+        val isLeapYear = java.time.Year.of(year).isLeap
+        val totalDays = if (isLeapYear) 366f else 365f
+        val progress = dayOfYear / totalDays
+
+        // Positioned based on the full screen dimensions, not the capsule
+        val barWidth = width * 0.65f
+        val barHeight = 25f
+        val barLeft = (width - barWidth) / 2f
+        val barTop = height - 380f // Positioned safely at the bottom of the screen
+
+        // Track (Semi-transparent white line with rounded caps)
+        val trackPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.argb(60, 255, 255, 255) // ~24% White
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = barHeight
+            strokeCap = android.graphics.Paint.Cap.ROUND
+            isAntiAlias = true
+        }
+        canvas.drawLine(barLeft, barTop, barLeft + barWidth, barTop, trackPaint)
+
+        // Custom Gradient Colors for the bar
+        val barGradientColor1 = android.graphics.Color.parseColor("#9F7E5C")
+        val barGradientColor2 = android.graphics.Color.parseColor("#F1D8C2")
+        val barGradientColor3 = android.graphics.Color.parseColor("#9F7E5C")
+
+        // Fill (Foreground progress line matching the custom gradient, with rounded caps)
+        val fillPaint = android.graphics.Paint().apply {
+            shader = android.graphics.LinearGradient(
+                barLeft, barTop, barLeft + barWidth, barTop,
+                intArrayOf(barGradientColor1, barGradientColor2, barGradientColor3),
+                null,
+                android.graphics.Shader.TileMode.CLAMP
+            )
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = barHeight
+            strokeCap = android.graphics.Paint.Cap.ROUND
+            isAntiAlias = true
+        }
+        val currentProgressWidth = barWidth * progress
+        canvas.drawLine(barLeft, barTop, barLeft + currentProgressWidth, barTop, fillPaint)
+
+        // Labels (Left: "YEAR PASSED", Right: Percentage)
+        val labelTextPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#9F7E5C") // Applied specific custom color
+            textSize = 42f
+            letterSpacing = 0.25f // Wide spacing as seen in the image
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+        canvas.drawText("YEAR PASSED", width / 2f, barTop - 36f, labelTextPaint)
+
+        val progressText = "${(progress * 100).toInt()}%"
+        val progressTextPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#9F7E5C")
+            textSize = 42f
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+            textAlign = android.graphics.Paint.Align.RIGHT
+        }
+        canvas.drawText(progressText, barLeft + barWidth, barTop - 36f, progressTextPaint)
 
         Log.i(TAG, "captureWallpaperBitmap (Native): Success")
         bitmap

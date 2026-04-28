@@ -16,8 +16,8 @@ fun DottedBackground(
     // We remove the Box and the Brush.verticalGradient here.
     // This component should ONLY draw the dots, acting as a transparent overlay.
     Canvas(modifier = modifier.fillMaxSize()) {
-        val dotSpacing = 20.dp.toPx()
-        val dotSize = 2.dp.toPx()
+        val dotSpacing = 8.dp.toPx()
+        val dotSize = 1.5.dp.toPx()
 
         for (x in 0..size.width.toInt() step dotSpacing.toInt()) {
             for (y in 0..size.height.toInt() step dotSpacing.toInt()) {

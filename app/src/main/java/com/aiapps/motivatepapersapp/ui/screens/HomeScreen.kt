@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aiapps.motivatepapersapp.ui.components.DottedBackground
 import com.aiapps.motivatepapersapp.ui.components.WallpaperCanvas
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.aiapps.motivatepapersapp.R
 
 @Composable
 fun HomeScreen(
@@ -39,23 +43,24 @@ fun HomeScreen(
                     CircularProgressIndicator(color = Color(0xFFD4AF37))
                 }
             }
-            is HomeUiState.Success -> {
-                // 1. Create the gradient brush from the current palette
-                val backgroundBrush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(android.graphics.Color.parseColor(state.palette.color1)),
-                        Color(android.graphics.Color.parseColor(state.palette.color2)),
-                        Color(android.graphics.Color.parseColor(state.palette.color3)),
-                        Color(android.graphics.Color.parseColor(state.palette.color4))
-                    )
-                )
-
-                // 2. Wrap the Success UI in a Box that draws the gradient
+            /*is HomeUiState.Success -> {
+                // Wrap the Success UI in a Box that draws the image background using the paint modifier
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(backgroundBrush)
+                        .paint(
+                            painter = painterResource(id = R.drawable.app_background),
+                            contentScale = ContentScale.Crop
+                        )
                 ) {
+                   */
+                    is HomeUiState.Success -> {
+                    // Wrap the Success UI in a Box with the specific solid color
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFFFAF5F1)) // Hex color #FAF5F1
+                    ) {
                     // 3. Apply the Dotted Background over the gradient
                     DottedBackground(
                         modifier = Modifier.fillMaxSize(),
@@ -69,7 +74,7 @@ fun HomeScreen(
                             .padding(horizontal = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(0.dp))
 
                         // 1. Generate Next Button
                         ActionGlassButton(
@@ -77,7 +82,7 @@ fun HomeScreen(
                             subtitle = "New quote & glass pairing",
                             icon = Icons.Rounded.Refresh,
                             onClick = viewModel::generateNext,
-                            glassColor = Color(0xFFB2E2F2).copy(alpha = 0.3f)
+                            glassColor = Color(0xFFE2ECE9).copy(alpha = 0.3f)
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -88,7 +93,7 @@ fun HomeScreen(
                             subtitle = "change the color scheme of the wallpaper",
                             icon = Icons.Rounded.ColorLens,
                             onClick = viewModel::changeGlassColor,
-                            glassColor = Color(0xFFFAD2E1).copy(alpha = 0.3f)
+                            glassColor = Color(0xFFE2ECE9).copy(alpha = 0.3f)
                         )
 
                         Spacer(modifier = Modifier.weight(0.5f))
@@ -100,8 +105,8 @@ fun HomeScreen(
                                 .aspectRatio(0.6f)
                                 .clip(RoundedCornerShape(32.dp))
                                 .background(Color.White)
-                                .border(6.dp, Color.White, RoundedCornerShape(32.dp))
-                                .scale(0.95f)
+                                .border(2.dp, Color.White, RoundedCornerShape(32.dp))
+                                .scale(1f)
                         ) {
                             WallpaperCanvas(
                                 quote = state.quote,
@@ -159,27 +164,17 @@ fun HomeScreen(
 
                     // Bottom Navigation Mockup (Pills)
                     // Note: Actual logic handled in NavHost/Scaffold in Step 6
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 32.dp)
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            .align(Alignment.BottomEnd) // Aligns the box to the bottom right
+                            .padding(bottom = 32.dp, end = 24.dp)
                     ) {
                         NavPill(
                             text = "GALLERY",
                             icon = Icons.Rounded.GridView,
                             isActive = false,
                             onClick = onNavigateToGallery,
-                            modifier = Modifier.weight(1f)
-                        )
-                        NavPill(
-                            text = "HOME",
-                            icon = Icons.Rounded.Home,
-                            isActive = true,
-                            onClick = {},
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.width(80.dp) // Gives the single button a clean, fixed width
                         )
                     }
                 }
@@ -258,7 +253,7 @@ fun NavPill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isActive) Color(0xFFFAD2E1).copy(alpha = 0.4f) else Color(0xFF1B261E).copy(alpha = 0.9f)
+    val backgroundColor = if (isActive) Color(0xFF1B261E).copy(alpha = 0.7f) else Color(0x00000000).copy(alpha = 0.7f)
     val contentColor = if (isActive) Color.Black.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.7f)
 
     Box(

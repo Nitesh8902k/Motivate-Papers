@@ -2,6 +2,8 @@ package com.aiapps.motivatepapersapp.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.annotation.FontRes
+import com.aiapps.motivatepapersapp.R
 import com.aiapps.motivatepapersapp.data.local.ThemeManager
 import com.aiapps.motivatepapersapp.data.model.ColorPalette
 import com.aiapps.motivatepapersapp.data.model.Quote
@@ -14,20 +16,61 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import android.content.Context
+import android.content.SharedPreferences
 
+data class FontOption(
+    val name: String,
+    @FontRes val fontResId: Int
+)
+
+val availableFonts = listOf(
+    FontOption("Anton", R.font.anton),
+    FontOption("Arapey", R.font.arapey),
+    FontOption("Caveat", R.font.caveat),
+    FontOption("Cedarville Cursive", R.font.cedarville_cursive),
+    FontOption("Cinzel", R.font.cinzel),
+    FontOption("Cormorant Garamond", R.font.cormorant_garamond),
+    FontOption("Dancing Script", R.font.dancing_script),
+    FontOption("Frank Ruhl Libre", R.font.frank_ruhl_libre),
+    FontOption("Instrument Serif", R.font.instrumentserif),
+    FontOption("Lora", R.font.lora),
+    FontOption("Manrope", R.font.manrope),
+    FontOption("Montserrat", R.font.montserrat),
+    FontOption("Oswald", R.font.oswald),
+    FontOption("Pacifico", R.font.pacifico_regular),
+    FontOption("Playfair Display", R.font.playfair_display),
+    FontOption("Poppins", R.font.poppins),
+    FontOption("Raleway", R.font.raleway),
+    FontOption("Shippori Mincho", R.font.shippori_mincho),
+    FontOption("Teko", R.font.teko),
+    )
 class HomeViewModel(
     private val quoteRepository: QuoteRepository,
     private val themeManager: ThemeManager,
-    private val wallpaperHelper: WallpaperHelper
+    private val wallpaperHelper: WallpaperHelper,
+    private val context: Context
 ) : ViewModel() {
 
+    private val prefs: SharedPreferences = context.getSharedPreferences("WallpaperPrefs", Context.MODE_PRIVATE)
+    private val savedFontId = prefs.getInt("selected_font_id", availableFonts[0].fontResId)
+    private val initialFont = availableFonts.find { it.fontResId == savedFontId } ?: availableFonts[0]
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _selectedFont = MutableStateFlow(initialFont)
+    val selectedFont: StateFlow<FontOption> = _selectedFont.asStateFlow()
 
     private val _previewDay = MutableStateFlow<Int?>(null)
 
     init {
         loadData()
+    }
+
+    // --- NEW: Function to save the font when the user taps one ---
+    fun selectFont(font: FontOption) {
+        _selectedFont.value = font
+        // Save the font ID permanently so the background worker can find it at midnight
+        prefs.edit().putInt("selected_font_id", font.fontResId).apply()
     }
 
     private fun loadData() {
@@ -50,6 +93,7 @@ class HomeViewModel(
             }
         }
     }
+
 
     fun generateNext() {
         val currentDay = (_uiState.value as? HomeUiState.Success)?.dayOfYear ?: Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
@@ -85,7 +129,8 @@ class HomeViewModel(
                 val bitmap = wallpaperHelper.captureWallpaperBitmap(
                     successState.quote, 
                     successState.palette,
-                    successState.dayOfYear
+                    successState.dayOfYear,
+                    _selectedFont.value.fontResId
                 )
                 Log.i("HomeViewModel", "Step 2: Bitmap captured: ${bitmap.width}x${bitmap.height}")
                 

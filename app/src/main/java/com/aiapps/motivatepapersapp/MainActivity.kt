@@ -66,13 +66,15 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable("home") {
+                            val context = LocalContext.current
                             val viewModel: HomeViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                                         return HomeViewModel(
                                             appModule.quoteRepository, 
                                             appModule.themeManager, 
-                                            appModule.wallpaperHelper
+                                            appModule.wallpaperHelper,
+                                            context.applicationContext
                                         ) as T
                                     }
                                 }

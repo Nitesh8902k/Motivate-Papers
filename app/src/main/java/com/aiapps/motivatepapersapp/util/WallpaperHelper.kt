@@ -45,35 +45,38 @@ class WallpaperHelper(private val context: Context) {
 
         try {
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Applying wallpaper...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Applying lock screen wallpaper...", Toast.LENGTH_SHORT).show()
             }
 
             val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                Log.d(TAG, "Setting wallpaper for BOTH System and Lock screens")
-                val resBoth = try {
-                    wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK)
+                Log.d(TAG, "Setting wallpaper for Lock screen ONLY")
+                val resLock = try {
+                    // Only use FLAG_LOCK here
+                    wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK)
                 } catch (e: Exception) {
-                    Log.w(TAG, "Combined set failed: ${e.message}")
+                    Log.w(TAG, "Lock screen set failed: ${e.message}")
                     -1
                 }
-
-                if (resBoth <= 0) {
-                    Log.w(TAG, "Trying System only as fallback")
-                    val resSystem = wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM)
-                    resSystem > 0
-                } else {
-                    true
-                }
+                resLock > 0
             } else {
-                wallpaperManager.setBitmap(bitmap)
-                true
+                // Android versions before Nougat (API 24) don't natively support separating
+                // lock screen and home screen wallpapers through this standard API.
+                Log.w(TAG, "Specific lock screen wallpaper not supported below Android N")
+                false
             }
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Wallpaper Applied!", Toast.LENGTH_SHORT).show()
+            if (result) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Lock Screen Wallpaper Applied!", Toast.LENGTH_SHORT).show()
+                }
+                Log.i(TAG, "setWallpaper: Completed successfully")
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to apply lock screen wallpaper.", Toast.LENGTH_SHORT).show()
+                }
             }
-            Log.i(TAG, "setWallpaper: Completed successfully")
-            true
+
+            result
         } catch (e: Exception) {
             Log.e(TAG, "setWallpaper: Critical failure", e)
             withContext(Dispatchers.Main) {
@@ -89,7 +92,8 @@ class WallpaperHelper(private val context: Context) {
     suspend fun captureWallpaperBitmap(
         quote: Quote,
         palette: ColorPalette,
-        dayOfYear: Int
+        dayOfYear: Int,
+        fontResId: Int
     ): Bitmap = withContext(Dispatchers.Default) {
         Log.i(TAG, "captureWallpaperBitmap (Native): Start for day $dayOfYear")
 
@@ -122,7 +126,7 @@ class WallpaperHelper(private val context: Context) {
 
         // 4. Draw Dotted Background
         val dotPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(25, 128, 128, 128) // Gray with 15% alpha
+            color = android.graphics.Color.argb(35, 128, 128, 128) // Gray with 15% alpha
             isAntiAlias = true
         }
         val spacing = 30f
@@ -225,7 +229,7 @@ class WallpaperHelper(private val context: Context) {
             letterSpacing = 0.25f
             textAlign = android.graphics.Paint.Align.CENTER
         }
-        canvas.drawText("TODAY'S QUOTE", innerRect.centerX(), innerRect.top + 130f, headerPaint)
+        canvas.drawText("MINDFUL FLOW", innerRect.centerX(), innerRect.top + 130f, headerPaint)
 
         // Draw Date String
         val dateString = java.time.LocalDate.ofYearDay(java.time.LocalDate.now().year, dayOfYear.coerceIn(1, 365))
@@ -238,11 +242,13 @@ class WallpaperHelper(private val context: Context) {
         }
         canvas.drawText(dateString, innerRect.centerX(), innerRect.top + 180f, datePaint)
 
+        val customTypeface = androidx.core.content.res.ResourcesCompat.getFont(context, fontResId)
+
         // Draw Quote using StaticLayout (handles multi-line text wrapping automatically)
         val quotePaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.argb(200, android.graphics.Color.red(textColor), android.graphics.Color.green(textColor), android.graphics.Color.blue(textColor)) // 70% opacity
             textSize = 68f
-            typeface = android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
+            typeface = customTypeface ?: android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
             textAlign = android.graphics.Paint.Align.CENTER
         }
 

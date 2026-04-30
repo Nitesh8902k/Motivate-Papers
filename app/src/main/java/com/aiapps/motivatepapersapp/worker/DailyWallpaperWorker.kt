@@ -11,6 +11,7 @@ import com.aiapps.motivatepapersapp.MotivatePapersApplication
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+import com.aiapps.motivatepapersapp.R
 
 class DailyWallpaperWorker(
     context: Context,
@@ -35,8 +36,12 @@ class DailyWallpaperWorker(
             val paletteIndex = themeManager.getActivePaletteIndex(dayOfYear)
             val palette = palettes.getOrElse(paletteIndex) { themeManager.defaultPalettes[0] }
 
+            val prefs = applicationContext.getSharedPreferences("WallpaperPrefs", Context.MODE_PRIVATE)
+
+            val savedFontId = prefs.getInt("selected_font_id", R.font.poppins)
+
             // Render to Bitmap
-            val bitmap = wallpaperHelper.captureWallpaperBitmap(quote, palette, dayOfYear)
+            val bitmap = wallpaperHelper.captureWallpaperBitmap(quote, palette, dayOfYear, savedFontId)
 
             // Set Wallpaper
             val success = wallpaperHelper.setWallpaper(bitmap)
@@ -75,7 +80,7 @@ class DailyWallpaperWorker(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 workRequest
             )
         }

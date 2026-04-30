@@ -24,9 +24,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aiapps.motivatepapersapp.ui.components.DottedBackground
 import com.aiapps.motivatepapersapp.ui.components.WallpaperCanvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import com.aiapps.motivatepapersapp.R
 
 @Composable
@@ -98,6 +109,63 @@ fun HomeScreen(
 
                         Spacer(modifier = Modifier.weight(0.5f))
 
+                        @Composable
+                        fun FontPickerRow(
+                            selectedFont: FontOption,
+                            onFontSelected: (FontOption) -> Unit
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
+                                Text(
+                                    text = "Choose Font",
+                                    color = Color.Black,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    fontWeight = FontWeight.Bold,
+                                )
+
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    items(availableFonts) { fontOption ->
+                                        val isSelected = fontOption == selectedFont
+                                        val fontFamily = FontFamily(Font(fontOption.fontResId)) // Compose loads the font here!
+
+                                        Card(
+                                            modifier = Modifier
+                                                .width(120.dp)
+                                                .height(80.dp)
+                                                .clickable { onFontSelected(fontOption) },
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isSelected) Color.Black.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.4f)
+                                            )
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.fillMaxSize().padding(8.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center
+                                            ) {
+                                                // The Preview Quote
+                                                Text(
+                                                    text = "Focus", // A common preview text, or you can use "Focus"
+                                                    fontFamily = fontFamily, // Applies the actual font!
+                                                    fontSize = 24.sp,
+                                                    color = Color.White
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                // The Font Name
+                                                Text(
+                                                    text = fontOption.name,
+                                                    fontSize = 12.sp,
+                                                    color = Color.White.copy(alpha = 0.8f),
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // 3. Wallpaper Preview
                         Box(
                             modifier = Modifier
@@ -117,6 +185,13 @@ fun HomeScreen(
                         }
 
                         Spacer(modifier = Modifier.weight(0.5f))
+
+                        val selectedFont by viewModel.selectedFont.collectAsState()
+
+                        FontPickerRow(
+                            selectedFont = selectedFont,
+                            onFontSelected = { font -> viewModel.selectFont(font) }
+                        )
 
                         // 4. Set as wallpaper Button
                         ActionGlassButton(

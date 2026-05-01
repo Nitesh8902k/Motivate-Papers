@@ -110,6 +110,7 @@ fun WallpaperCanvas(
 
                     // Top Section
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        /*
                         Text(
                             text = "MINDFUL FLOW",
                             color = textColor.copy(alpha = 0.7f),
@@ -117,13 +118,15 @@ fun WallpaperCanvas(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 2.sp
                         )
+
                         Spacer(modifier = Modifier.height(0.dp))
+                         */
                         Text(
                             text = dateString,
                             color = textColor.copy(alpha = 0.6f),
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Medium,
-                            letterSpacing = 1.sp
+                            letterSpacing = 0.sp
                         )
                     }
 
@@ -131,12 +134,12 @@ fun WallpaperCanvas(
                     Text(
                         text = "\"${quote.quote}\"",
                         color = textColor,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Serif,
                         fontStyle = FontStyle.Normal,
                         textAlign = TextAlign.Center,
                         lineHeight = 12.sp,
-                        maxLines = 3, // Limits the quote to 2 lines (you can adjust this number)
+                        maxLines = 4, // Limits the quote to 2 lines (you can adjust this number)
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis // Adds the "..." at the end
                     )
 

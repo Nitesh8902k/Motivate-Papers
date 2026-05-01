@@ -9,6 +9,7 @@ import com.aiapps.motivatepapersapp.data.model.ColorPalette
 import com.aiapps.motivatepapersapp.data.model.Quote
 import com.aiapps.motivatepapersapp.data.repository.QuoteRepository
 import com.aiapps.motivatepapersapp.util.WallpaperHelper
+import com.aiapps.motivatepapersapp.util.MindfulFlowWallpaperHelper // Added import for the new helper
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import android.content.Context
 import android.content.SharedPreferences
+import kotlin.random.Random
 
 data class FontOption(
     val name: String,
@@ -44,13 +46,17 @@ val availableFonts = listOf(
     FontOption("Raleway", R.font.raleway),
     FontOption("Shippori Mincho", R.font.shippori_mincho),
     FontOption("Teko", R.font.teko),
-    )
+)
+
 class HomeViewModel(
     private val quoteRepository: QuoteRepository,
     private val themeManager: ThemeManager,
-    private val wallpaperHelper: WallpaperHelper,
+    private val wallpaperHelper: WallpaperHelper, // Original Glassmorphic helper
     private val context: Context
 ) : ViewModel() {
+
+    // Instantiate the new helper right here using the context that is already injected
+    private val mindfulFlowWallpaperHelper = MindfulFlowWallpaperHelper(context)
 
     private val prefs: SharedPreferences = context.getSharedPreferences("WallpaperPrefs", Context.MODE_PRIVATE)
     private val savedFontId = prefs.getInt("selected_font_id", availableFonts[0].fontResId)
@@ -60,16 +66,14 @@ class HomeViewModel(
     private val _selectedFont = MutableStateFlow(initialFont)
     val selectedFont: StateFlow<FontOption> = _selectedFont.asStateFlow()
 
-    private val _previewDay = MutableStateFlow<Int?>(null)
+    private val _quoteFetchDay = MutableStateFlow(Calendar.getInstance().get(Calendar.DAY_OF_YEAR))
 
     init {
         loadData()
     }
 
-    // --- NEW: Function to save the font when the user taps one ---
     fun selectFont(font: FontOption) {
         _selectedFont.value = font
-        // Save the font ID permanently so the background worker can find it at midnight
         prefs.edit().putInt("selected_font_id", font.fontResId).apply()
     }
 
@@ -77,17 +81,20 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 themeManager.palettesFlow,
-                _previewDay
-            ) { palettes, previewDay ->
+                _quoteFetchDay
+            ) { palettes, quoteDay ->
                 val calendar = Calendar.getInstance()
                 val currentDay = calendar.get(Calendar.DAY_OF_YEAR)
-                val dayToUse = previewDay ?: currentDay
-                
-                val quote = quoteRepository.getQuoteForDay(dayToUse)
-                val paletteIndex = themeManager.getActivePaletteIndex(dayToUse)
+
+                // 1. Fetch the quote using the changing quoteDay
+                val quote = quoteRepository.getQuoteForDay(quoteDay)
+
+                // 2. Fetch the palette using the static currentDay
+                val paletteIndex = themeManager.getActivePaletteIndex(currentDay)
                 val palette = palettes.getOrElse(paletteIndex) { themeManager.defaultPalettes[0] }
-                
-                HomeUiState.Success(quote, palette, dayToUse)
+
+                // 3. Pass currentDay to the UI so the date/progress bar never change
+                HomeUiState.Success(quote, palette, currentDay)
             }.collect { state ->
                 _uiState.value = state
             }
@@ -96,8 +103,8 @@ class HomeViewModel(
 
 
     fun generateNext() {
-        val currentDay = (_uiState.value as? HomeUiState.Success)?.dayOfYear ?: Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-        _previewDay.value = (currentDay % 365) + 1
+        // Generates a random quote index between 1 and 365
+        _quoteFetchDay.value = Random.nextInt(1, 366)
     }
 
     fun changeGlassColor() {
@@ -105,7 +112,7 @@ class HomeViewModel(
             val successState = _uiState.value as? HomeUiState.Success ?: return@launch
             val currentDay = successState.dayOfYear
             val paletteIndex = themeManager.getActivePaletteIndex(currentDay)
-            
+
             val newPalette = ColorPalette(
                 color1 = getRandomPastelHex(),
                 color2 = getRandomPastelHex(),
@@ -116,28 +123,56 @@ class HomeViewModel(
         }
     }
 
-    fun setAsWallpaper() {
-        Log.i("HomeViewModel", "!!! setAsWallpaper button tapped !!!")
+    // Updated to require the selected design as a parameter
+    fun setAsWallpaper(selectedDesign: WallpaperDesignOption) {
+        Log.i("HomeViewModel", "!!! setAsWallpaper button tapped !!! Design: $selectedDesign")
+
+        prefs.edit().putString("selected_design", selectedDesign.name).apply()
+
         viewModelScope.launch {
             val successState = _uiState.value as? HomeUiState.Success ?: run {
                 Log.e("HomeViewModel", "setAsWallpaper: Not in Success state")
                 return@launch
             }
-            
+
             try {
-                Log.i("HomeViewModel", "Step 1: Capturing bitmap for day ${successState.dayOfYear}...")
-                val bitmap = wallpaperHelper.captureWallpaperBitmap(
-                    successState.quote, 
-                    successState.palette,
-                    successState.dayOfYear,
-                    _selectedFont.value.fontResId
-                )
-                Log.i("HomeViewModel", "Step 2: Bitmap captured: ${bitmap.width}x${bitmap.height}")
-                
-                Log.i("HomeViewModel", "Step 3: Calling wallpaperHelper.setWallpaper")
-                val result = wallpaperHelper.setWallpaper(bitmap)
-                Log.i("HomeViewModel", "Step 4: Set wallpaper result: $result")
-                
+                val result = when (selectedDesign) {
+                    WallpaperDesignOption.GRADIENT_GLASS -> {
+                        Log.i("HomeViewModel", "Step 1: Capturing Glassmorphic bitmap...")
+                        val bitmap = wallpaperHelper.captureWallpaperBitmap(
+                            successState.quote,
+                            successState.palette,
+                            successState.dayOfYear,
+                            _selectedFont.value.fontResId
+                        )
+                        wallpaperHelper.setWallpaper(bitmap)
+                    }
+
+                    WallpaperDesignOption.STATIC_MINIMAL -> {
+                        Log.i("HomeViewModel", "Step 1: Capturing Mindful Flow bitmap...")
+
+                        // Automatically switch to dark mode between 6 PM and 6 AM
+                        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                        val isDarkMode = hour >= 18 || hour < 6
+
+                        val currentBackground = if (isDarkMode) {
+                            R.drawable.night_bg  // Your dark image name
+                        } else {
+                            R.drawable.day_bg // Your light image name
+                        }
+
+                        val bitmap = mindfulFlowWallpaperHelper.captureWallpaperBitmap(
+                            quote = successState.quote,
+                            dayOfYear = successState.dayOfYear,
+                            fontResId = _selectedFont.value.fontResId,
+                            backgroundResId = currentBackground, // Your static image
+                            isDarkMode = isDarkMode
+                        )
+                        mindfulFlowWallpaperHelper.setWallpaper(bitmap)
+                    }
+                }
+
+                Log.i("HomeViewModel", "Step 2: Set wallpaper result: $result")
                 if (result) {
                     Log.i("HomeViewModel", "Wallpaper set successfully!")
                 } else {

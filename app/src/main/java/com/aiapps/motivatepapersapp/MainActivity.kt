@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aiapps.motivatepapersapp.ui.screens.BookmarksScreen
 import com.aiapps.motivatepapersapp.ui.screens.GalleryScreen
 import com.aiapps.motivatepapersapp.ui.screens.GalleryViewModel
 import com.aiapps.motivatepapersapp.ui.screens.HomeScreen
@@ -33,13 +34,43 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         val appModule = (application as MotivatePapersApplication).appModule
 
         setContent {
             MotivatePapersAppTheme {
                 val navController = rememberNavController()
-                
+                val context = LocalContext.current
+
+                // 1. Initialize ViewModels HERE, outside the NavHost.
+                // Because they are called directly inside setContent, they are scoped
+                // to the MainActivity and will survive navigation between screens!
+
+                val sharedHomeViewModel: HomeViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return HomeViewModel(
+                                appModule.quoteRepository,
+                                appModule.themeManager,
+                                appModule.wallpaperHelper,
+                                context.applicationContext
+                            ) as T
+                        }
+                    }
+                )
+
+                val sharedGalleryViewModel: GalleryViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return GalleryViewModel(
+                                appModule.quoteRepository,
+                                appModule.themeManager,
+                                appModule.userPreferencesRepository // Make sure you pass this here!
+                            ) as T
+                        }
+                    }
+                )
+
                 // Permission Request Logic
                 val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS)
@@ -56,47 +87,36 @@ class MainActivity : ComponentActivity() {
                         launcher.launch(permissionsToRequest)
                     }
                 }
-                
+
                 Scaffold(
                     containerColor = Color.Transparent
                 ) { innerPadding ->
                     NavHost(
-                        navController = navController, 
+                        navController = navController,
                         startDestination = "home",
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable("home") {
-                            val context = LocalContext.current
-                            val viewModel: HomeViewModel = viewModel(
-                                factory = object : ViewModelProvider.Factory {
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return HomeViewModel(
-                                            appModule.quoteRepository, 
-                                            appModule.themeManager, 
-                                            appModule.wallpaperHelper,
-                                            context.applicationContext
-                                        ) as T
-                                    }
-                                }
-                            )
+                            // 2. Pass the shared instance
                             HomeScreen(
-                                viewModel = viewModel,
+                                viewModel = sharedHomeViewModel,
                                 onNavigateToGallery = { navController.navigate("gallery") }
                             )
                         }
+
                         composable("gallery") {
-                            val viewModel: GalleryViewModel = viewModel(
-                                factory = object : ViewModelProvider.Factory {
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return GalleryViewModel(
-                                            appModule.quoteRepository, 
-                                            appModule.themeManager
-                                        ) as T
-                                    }
-                                }
-                            )
+                            // 3. Pass the shared instance
                             GalleryScreen(
-                                viewModel = viewModel,
+                                viewModel = sharedGalleryViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToBookmarks = { navController.navigate("bookmarks") }
+                            )
+                        }
+
+                        composable("bookmarks") {
+                            // 4. Pass the EXACT SAME shared instance here
+                            BookmarksScreen(
+                                viewModel = sharedGalleryViewModel,
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }

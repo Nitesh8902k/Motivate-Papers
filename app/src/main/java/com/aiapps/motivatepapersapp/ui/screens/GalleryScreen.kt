@@ -17,7 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -219,24 +221,39 @@ fun GalleryScreen(
                     }
                 }
 
-                // 4. Floating "Surprise Me" Button
+                // 4. Floating Refresh Button
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .systemBarsPadding()
-                        .padding(bottom = 24.dp, start = 24.dp, end = 24.dp)
-                ) {
-                    ActionGlassPill(
-                        title = "Surprise Me",
-                        subtitle = "Randomise the quotes",
-                        leftIcon = Icons.Rounded.CardGiftcard,
-                        rightIcon = Icons.Rounded.Refresh, // Swapped to Refresh icon to match the action
-                        onClick = {
+                        .padding(bottom = 60.dp)
+                        .size(width = 70.dp, height = 70.dp)
+                        .shadow(
+                            elevation = 23.dp,
+                            shape = CircleShape,
+                            spotColor = Color.Black,
+                            ambientColor = Color.Black,
+                        )
+                        .clip(CircleShape)
+                        // Using the exact same frosted glass style as your top search/bookmark buttons
+                        .background(
+                            Brush.linearGradient(
+                                listOf(Color(0xFFE0B838), Color(0xFFB89529)) // Golden gradient
+                            )
+                        )
+                        .clickable {
                             viewModel.randomizeQuotes() // Shuffle the list
                             coroutineScope.launch {
                                 listState.animateScrollToItem(0) // Smoothly scroll to top
                             }
-                        }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "Randomise quotes",
+                        tint = Color.White,
+                        modifier = Modifier.size(38.dp)
                     )
                 }
             }
@@ -370,76 +387,6 @@ fun QuoteDarkGlassCard(
                         .background(Color.White.copy(alpha = 0.1f))
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun ActionGlassPill(
-    title: String,
-    subtitle: String,
-    leftIcon: ImageVector,
-    rightIcon: ImageVector,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(84.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color.White.copy(alpha = 0.4f))
-            .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
-            .clickable { onClick() }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Left Icon Box
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF2C2C30)), // Dark box
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = leftIcon,
-                    contentDescription = null,
-                    tint = Color(0xFFD4AF37), // Gold
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Texts
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2D2D2D)
-                    )
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color.DarkGray,
-                        lineHeight = 16.sp
-                    )
-                )
-            }
-
-            // Right Chevron
-            Icon(
-                imageVector = rightIcon,
-                contentDescription = null,
-                tint = Color.DarkGray,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }

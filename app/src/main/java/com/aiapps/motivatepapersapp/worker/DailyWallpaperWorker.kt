@@ -113,7 +113,7 @@ class DailyWallpaperWorker(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 workTag,
-                ExistingPeriodicWorkPolicy.REPLACE, // Replaces any existing schedules to prevent duplicates
+                ExistingPeriodicWorkPolicy.KEEP,
                 workRequest
             )
 
